@@ -1,0 +1,37 @@
+﻿@using KB11193_IgbColumn_FilterMask.Data
+@inject IJSRuntime JSRuntime
+
+<div>
+    <IgbGrid Id="grid1"
+            AutoGenerate=false
+            Data="_AthletesData"
+            Height="400px"
+            AllowFiltering=true
+            ColumnInit="OnColumnInit">
+        <IgbColumn Field="Name" Sortable=true />
+        <IgbColumn Field="AthleteNumber" Sortable=true Header="Athlete Number" Filterable=false/>
+        <IgbColumn Field="RegistDate" Header="Regist Date" Sortable="true" Editable="false" Resizable="true" HasSummary="false" DataType="GridColumnDataType.DateTime" PipeArgs=@(new IgbColumnPipeArgs(){ Format="yyyy/MM/dd HH:mm:ss" })></IgbColumn>
+    </IgbGrid>
+
+</div>
+
+@code {
+    private AthletesData _AthletesData = new();
+
+    /// <summary>
+    /// IgbGrid 内の、カラム要素の準備ができたときに呼び出されます。
+    /// </summary>
+    private async Task OnColumnInit(IgbColumnComponentEventArgs args)
+    {
+        // Field == "RegistDate" のカラムの準備ができたら、同カラムの defaultDateFormat プロパティを設定します。
+        if (args.Detail.Field == nameof(AthletesDataItem.RegistDate))
+        {
+            await using var helper = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./helper.js");
+
+            // 指定した CSS セレクタで識別される Grid コンポーネント内の、指定したフィールドにバインドされている列について、
+            // フィルタのマスク定義に使用される、デフォルトの日付フォーマットを設定する。
+            // (IgbColumn に直接この機能にアクセスする用意がないため、JavaScript 経由で設定する)
+            await helper.InvokeVoidAsync("setDefaultDateTimeFormat", "#grid1", nameof(AthletesDataItem.RegistDate), "yyyy/MM/dd/HH:mm:ss");
+        }
+    }
+}
